@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OSTHIR INCOME</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f1f5fa;color:#17243a;font-family:Arial,sans-serif}
+header{background:linear-gradient(130deg,#102d67,#0787bd);color:white;padding:23px 18px;border-radius:0 0 22px 22px}
+.brand{font-size:24px;font-weight:bold}
+header p{font-size:12px;color:#dceeff}
+main{max-width:560px;margin:auto;padding:15px}
+.card{background:white;padding:17px;border-radius:15px;margin:12px 0;box-shadow:0 3px 14px #102d670b}
+h3{margin:0 0 13px;font-size:17px}
+.small{font-size:12px;color:#718096;line-height:1.6}
+.big{font-size:29px;color:#087bba;font-weight:bold;margin:8px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#f0f7fc;padding:13px;border-radius:12px}
+.stat b{display:block;font-size:20px;margin-top:7px}
+button{border:0;border-radius:10px;padding:12px 14px;background:#087bba;color:white;font-weight:bold;font-size:14px;cursor:pointer;margin:4px 0}
+button.green{background:#13865f}
+button.red{background:#c94b4b}
+button.gray{background:#e8eef5;color:#25364d}
+button:disabled{opacity:.5}
+input,textarea,select{width:100%;padding:12px;border:1px solid #d9e1eb;border-radius:9px;margin:6px 0;font-size:14px}
+textarea{min-height:65px}
+.page{display:none}
+.page.active{display:block}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.task{border:1px solid #e5ebf2;border-radius:12px;padding:13px;margin:10px 0}
+.tag{font-size:11px;background:#e8f3fb;color:#087bba;padding:5px 8px;border-radius:20px}
+.auth-status{max-width:560px;margin:10px auto 0;padding:9px 15px;font-size:12px;color:#43536a;background:#e8f3fb;border-radius:9px;line-height:1.5}\nnav{position:sticky;bottom:0;background:white;display:flex;justify-content:space-around;padding:8px 2px;box-shadow:0 -3px 15px #0001}
+nav button{background:white;color:#43536a;font-size:11px;padding:8px 5px;margin:0}
+nav button.active{color:#087bba}
+.notice{background:#fff7df;padding:11px;border-radius:9px;font-size:12px;line-height:1.6;color:#775719}
+.item{border-bottom:1px solid #edf0f4;padding:12px 0;font-size:13px}
+.actions{display:flex;gap:5px;flex-wrap:wrap}
+.actions button{font-size:11px;padding:9px}
+</style>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<header>
+ <div class="brand">💎 OSTHIR INCOME</div>
+ <p>কাজ করুন • পয়েন্ট জমা করুন • পুরস্কার নিন</p>
+</header>
+<div id="telegramAuthStatus" class="auth-status">Telegram Login যাচাই করা হচ্ছে...</div>
+<main>
+
+<section id="home" class="page active">
+ <div class="card">
+  <div class="small">আপনার মোট পয়েন্ট</div>
+  <div class="big" id="points">০</div>
+  <div class="small">প্রতি ১০০ পয়েন্ট = ৳১ (পরীক্ষামূলক হার)</div>
+ </div>
+ <div class="grid">
+  <div class="stat"><span class="small">পয়েন্টের আনুমানিক মূল্য</span><b id="value">৳০</b></div>
+  <div class="stat"><span class="small">অনুমোদিত পুরস্কার</span><b id="pool">৳০</b></div>
+ </div>
+ <div class="card">
+  <h3>📌 গুরুত্বপূর্ণ ঘোষণা</h3>
+  <div class="notice">স্পনসরের কাছ থেকে টাকা বাস্তবে পাওয়ার পরই পুরস্কার বরাদ্দ হবে। আয় নিশ্চিত না হওয়া পর্যন্ত কোনো টাকা তোলা যাবে না।</div>
+ </div>
+ <div class="card">
+  <h3>⚡ দ্রুত কাজ</h3>
+  <button onclick="show('tasks')">কাজ দেখুন</button>
+  <button class="gray" onclick="show('wallet')">আমার Wallet</button>
+ </div>
+</section>
+
+<section id="tasks" class="page">
+ <div class="card">
+  <h3>📋 Available Tasks</h3>
+  <p class="small">Admin-এর তৈরি করা চালু কাজগুলো এখানে দেখা যাবে।</p>
+  <div id="taskList"></div>
+ </div>
+ <div class="card">
+  <h3>📝 কাজের প্রমাণ জমা দিন</h3>
+  <select id="taskOfferSelect">
+   <option value="">একটি Task নির্বাচন করুন</option>
+  </select>
+  <textarea id="proof" placeholder="কাজের প্রমাণ বা বিবরণ লিখুন"></textarea>
+  <button onclick="submitTask()">আবেদন জমা দিন</button>
+  <p class="small">Admin যাচাই করার পর আবেদন অনুমোদিত বা বাতিল হবে।</p>
+ </div>
+ <div class="card">
+  <h3>আমার জমা দেওয়া কাজ</h3>
+  <div id="myTasks" class="small">এখনো কোনো কাজ জমা দেননি।</div>
+ </div>
+</section>
+
+<section id="wallet" class="page">
+ <div class="card">
+  <h3>💰 My Wallet</h3>
+  <div class="big" id="walletPoints">০ পয়েন্ট</div>
+  <div class="small">আনুমানিক মূল্য: <b id="walletValue">৳০</b></div>
+  <button onclick="show('withdraw')">Withdraw আবেদন</button>
+ </div>
+</section>
+
+<section id="withdraw" class="page">
+ <div class="card">
+  <h3>🏧 Withdraw Request</h3>
+  <div class="small">আপনার পয়েন্টের মূল্য: <b id="withdrawValue">৳০</b></div>
+  <input id="withdrawPhone" placeholder="bKash/Nagad নম্বর">
+  <select id="withdrawMethod">
+   <option>bKash</option><option>Nagad</option>
+  </select>
+  <input id="withdrawAmount" type="number" min="1" placeholder="টাকার পরিমাণ">
+  <button class="green" onclick="requestWithdraw()">আবেদন জমা দিন</button>
+  <p class="small">এটি Demo। কোনো টাকা স্বয়ংক্রিয়ভাবে পাঠানো হবে না।</p>
+  <div id="withdrawList"></div>
+ </div>
+</section>
+
+<section id="admin" class="page">
+ <div class="card">
+  <h3>🔐 Admin Login</h3>
+  <p class="small">পরীক্ষামূলক Admin PIN: 1234</p>
+  <input id="adminPin" type="password" placeholder="Admin PIN">
+  <button onclick="loginAdmin()">Login</button>
+  <div id="adminMessage" class="small"></div>
+ </div>
+
+ <div id="adminPanel" style="display:none">
+
+  <div class="card">
+   <h3>📊 Business Summary</h3>
+   <div class="grid">
+    <div class="stat"><span class="small">রেকর্ড করা আয়</span><b id="revenue">৳০</b></div>
+    <div class="stat"><span class="small">অবশিষ্ট তহবিল</span><b id="reserve">৳০</b></div>
+    <div class="stat"><span class="small">মোট অনুমোদিত পয়েন্ট</span><b id="allPoints">০</b></div>
+    <div class="stat"><span class="small">Pending কাজ</span><b id="pendingCount">০</b></div>
+   </div>
+  </div>
+
+  <div class="card">
+   <h3>➕ নতুন Task তৈরি করুন</h3>
+   <input id="newTaskName" placeholder="Task-এর নাম">
+   <textarea id="newTaskDescription" placeholder="Task-এর বিস্তারিত নির্দেশনা"></textarea>
+   <input id="newTaskReward" type="number" min="1" placeholder="কত পয়েন্ট দেবেন? যেমন 100">
+   <button class="green" onclick="createTask()">Task তৈরি করুন</button>
+   <div class="small">১০০ পয়েন্ট = ৳১। চালু করার জন্য পর্যাপ্ত স্পনসর তহবিল থাকা প্রয়োজন।</div>
+  </div>
+
+  <div class="card">
+   <h3>📋 আপনার তৈরি করা Task</h3>
+   <div id="adminOffers"></div>
+  </div>
+
+  <div class="card">
+   <h3>➕ স্পনসরের পাওয়া অর্থ রেকর্ড</h3>
+   <p class="small">শুধু বাস্তবে পাওয়া অর্থ এখানে লিখবেন।</p>
+   <input id="sponsorName" placeholder="স্পনসরের নাম">
+   <input id="sponsorAmount" type="number" min="1" placeholder="বাস্তবে পাওয়া টাকা">
+   <input id="reserveAmount" type="number" min="0" placeholder="পুরস্কারের জন্য বরাদ্দ টাকা">
+   <button class="green" onclick="addSponsor()">আয় রেকর্ড করুন</button>
+   <div id="sponsorHistory" class="small"></div>
+  </div>
+
+  <div class="card">
+   <h3>📝 ব্যবহারকারীর কাজ যাচাই</h3>
+   <div id="adminTasks"></div>
+  </div>
+
+  <div class="card">
+   <h3>🏧 Withdraw যাচাই</h3>
+   <div id="adminWithdraw"></div>
+  </div>
+
+  <div class="card">
+   <h3>⚠️ সতর্কতা</h3>
+   <p class="small">এই Admin Panel ফোনের Demo মাত্র। PIN নিরাপদ নয়। বাস্তব অর্থ, ব্যবহারকারী বা পেমেন্টের জন্য সার্ভারভিত্তিক নিরাপত্তা প্রয়োজন।</p>
+   <button class="red" onclick="logoutAdmin()">Logout</button>
+  </div>
+ </div>
+</section>
+
+<section id="profile" class="page">
+ <div class="card">
+  <h3>👤 Profile</h3>
+  <p id="profileName">Telegram ব্যবহারকারী</p>
+  <p class="small" id="profileTelegram">Telegram Login যাচাই করা হচ্ছে...</p>
+  <button class="gray" onclick="show('admin')">Admin Panel</button>
+ </div>
+</section>
+</main>
+
+<nav>
+ <button class="active" onclick="show('home',this)">🏠<br>Home</button>
+ <button onclick="show('tasks',this)">📋<br>Tasks</button>
+ <button onclick="show('wallet',this)">💰<br>Wallet</button>
+ <button onclick="show('admin',this)">🔐<br>Admin</button>
+ <button onclick="show('profile',this)">👤<br>Profile</button>
+</nav>
+
+<script>
+const KEY="osthir_business_demo_v1";
+let db=JSON.parse(localStorage.getItem(KEY)||"null");
+
+if(!db){
+ db={points:0,revenue:0,reserve:0,liability:0,tasks:[],offers:[],withdrawals:[],sponsors:[],approvedPoints:0};
+}
+db.offers=db.offers||[];
+db.liability=db.liability||0;
+let adminOpen=false;
+
+function save(){
+ localStorage.setItem(KEY,JSON.stringify(db));
+ render();
+}
+function money(n){
+ return "৳"+Number(n||0).toLocaleString("en-BD",{maximumFractionDigits:2});
+}
+function show(id,btn){
+ document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+ if(btn)btn.classList.add("active");
+ render();
+}
+function createTask(){
+ let name=document.getElementById("newTaskName").value.trim();
+ let description=document.getElementById("newTaskDescription").value.trim();
+ let reward=Number(document.getElementById("newTaskReward").value);
+
+ if(!name||!description||!Number.isInteger(reward)||reward<=0){
+  alert("Task-এর নাম, বিবরণ ও সঠিক পয়েন্ট লিখুন");
+  return;
+ }
+ let cost=reward/100;
+ if(cost>db.reserve){
+  alert("পর্যাপ্ত পুরস্কার তহবিল নেই। বাস্তব স্পনসর আয় নিশ্চিত করুন।");
+  return;
+ }
+ db.offers.unshift({
+  id:Date.now(),
+  name:name,
+  description:description,
+  reward:reward,
+  active:true
+ });
+ document.getElementById("newTaskName").value="";
+ document.getElementById("newTaskDescription").value="";
+ document.getElementById("newTaskReward").value="";
+ save();
+ alert("Demo Task তৈরি হয়েছে");
+}
+function toggleOffer(id){
+ let o=db.offers.find(x=>x.id===id);
+ if(!o)return;
+ o.active=!o.active;
+ save();
+}
+function submitTask(){
+ let offerId=Number(document.getElementById("taskOfferSelect").value);
+ let proof=document.getElementById("proof").value.trim();
+ let offer=db.offers.find(x=>x.id===offerId&&x.active);
+ if(!offer){alert("একটি চালু Task নির্বাচন করুন");return}
+ if(!proof){alert("কাজের প্রমাণ লিখুন");return}
+ let already=db.tasks.some(t=>t.offerId===offerId&&t.status!=="Rejected");
+ if(already){alert("এই Task-এর জন্য আপনার আবেদন আগে জমা হয়েছে");return}
+ db.tasks.unshift({
+  id:Date.now(),
+  offerId:offer.id,
+  name:offer.name,
+  proof:proof,
+  status:"Pending",
+  reward:0
+ });
+ document.getElementById("proof").value="";
+ save();
+ alert("Demo আবেদন জমা হয়েছে");
+}
+function addSponsor(){
+ let name=document.getElementById("sponsorName").value.trim();
+ let amount=Number(document.getElementById("sponsorAmount").value);
+ let reserve=Number(document.getElementById("reserveAmount").value);
+ if(!name||!Number.isFinite(amount)||amount<=0||
+ !Number.isFinite(reserve)||reserve<0||reserve>amount){
+  alert("সঠিক তথ্য দিন। বরাদ্দ পাওয়া টাকার বেশি হতে পারবে না।");
+  return;
+ }
+ db.revenue+=amount;
+ db.reserve+=reserve;
+ db.sponsors.unshift({name,amount,reserve,date:new Date().toLocaleString("bn-BD")});
+ document.getElementById("sponsorName").value="";
+ document.getElementById("sponsorAmount").value="";
+ document.getElementById("reserveAmount").value="";
+ save();
+ alert("Demo-তে আয় রেকর্ড হয়েছে। শুধু বাস্তবে পাওয়া অর্থই লিখবেন।");
+}
+function loginAdmin(){
+ if(document.getElementById("adminPin").value==="1234"){
+  adminOpen=true;
+  document.getElementById("adminPanel").style.display="block";
+  document.getElementById("adminMessage").textContent="Demo Admin চালু হয়েছে";
+  render();
+ }else{
+  document.getElementById("adminMessage").textContent="ভুল PIN";
+ }
+}
+function logoutAdmin(){
+ adminOpen=false;
+ document.getElementById("adminPanel").style.display="none";
+ document.getElementById("adminPin").value="";
+}
+function approveTask(id){
+ let t=db.tasks.find(x=>x.id===id);
+ if(!t||t.status!=="Pending")return;
+ let offer=db.offers.find(x=>x.id===t.offerId);
+ let reward=offer?offer.reward:Number(prompt("এই কাজের পয়েন্ট কত দেবেন?"));
+ if(!Number.isInteger(reward)||reward<=0){
+  alert("সঠিক পয়েন্ট নির্ধারিত হয়নি");
+  return;
+ }
+ let cost=reward/100;
+ if(cost>db.reserve){
+  alert("পুরস্কার তহবিলে যথেষ্ট টাকা নেই। স্পনসরের নিশ্চিত আয় ছাড়া অনুমোদন করা যাবে না।");
+  return;
+ }
+ db.reserve-=cost;
+ db.liability+=cost;
+ db.points+=reward;
+ db.approvedPoints+=reward;
+ t.status="Approved";
+ t.reward=reward;
+ save();
+}
+function rejectTask(id){
+ let t=db.tasks.find(x=>x.id===id);
+ if(t&&t.status==="Pending"){
+  t.status="Rejected";
+  save();
+ }
+}
+function requestWithdraw(){
+ let phone=document.getElementById("withdrawPhone").value.trim();
+ let amount=Number(document.getElementById("withdrawAmount").value);
+ if(!/^01[3-9]\d{8}$/.test(phone)){
+  alert("সঠিক ১১ সংখ্যার নম্বর দিন");return;
+ }
+ if(!Number.isFinite(amount)||amount<=0){
+  alert("সঠিক টাকার পরিমাণ দিন");return;
+ }
+ let pts=amount*100;
+ if(!Number.isInteger(pts)||pts>db.points){
+  alert("আপনার পয়েন্ট যথেষ্ট নয়");return;
+ }
+ let pending=db.withdrawals.filter(w=>w.status==="Pending").reduce((s,w)=>s+w.amount,0);
+ if(amount>db.liability-pending){
+  alert("উত্তোলনের জন্য পর্যাপ্ত অনুমোদিত পুরস্কার নেই");return;
+ }
+ db.points-=pts;
+ db.withdrawals.unshift({
+  id:Date.now(),
+  phone,
+  method:document.getElementById("withdrawMethod").value,
+  amount,
+  status:"Pending"
+ });
+ document.getElementById("withdrawAmount").value="";
+ save();
+ alert("Demo আবেদন জমা হয়েছে। কোনো টাকা পাঠানো হয়নি।");
+}
+function markPaid(id){
+ let w=db.withdrawals.find(x=>x.id===id);
+ if(!w||w.status!=="Pending")return;
+ if(!confirm("বাস্তবে ব্যবহারকারীকে টাকা পাঠিয়েছেন কি? পাঠিয়ে থাকলেই Confirm করুন।"))return;
+ w.status="Paid";
+ db.liability=Math.max(0,db.liability-w.amount);
+ save();
+}
+function rejectWithdraw(id){
+ let w=db.withdrawals.find(x=>x.id===id);
+ if(!w||w.status!=="Pending")return;
+ w.status="Rejected";
+ db.points+=w.amount*100;
+ save();
+}
+function esc(s){
+ return String(s).replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[c]));
+}
+function render(){
+ document.getElementById("points").textContent=db.points.toLocaleString("bn-BD");
+ document.getElementById("value").textContent=money(db.points/100);
+ document.getElementById("pool").textContent=money(db.liability);
+ document.getElementById("walletPoints").textContent=db.points.toLocaleString("bn-BD")+" পয়েন্ট";
+ document.getElementById("walletValue").textContent=money(db.points/100);
+ document.getElementById("withdrawValue").textContent=money(db.points/100);
+
+ let activeOffers=db.offers.filter(o=>o.active);
+ document.getElementById("taskList").innerHTML=activeOffers.length?
+ activeOffers.map(o=>'<div class="task"><b>'+esc(o.name)+'</b><p class="small">'+esc(o.description)+'</p><span class="tag">'+o.reward+' পয়েন্ট</span></div>').join("")
+ :'<div class="task">এখনো কোনো চালু Task নেই।</div>';
+
+ document.getElementById("taskOfferSelect").innerHTML=
+ '<option value="">একটি Task নির্বাচন করুন</option>'+
+ activeOffers.map(o=>'<option value="'+o.id+'">'+esc(o.name)+' — '+o.reward+' পয়েন্ট</option>').join("");
+
+ document.getElementById("myTasks").innerHTML=db.tasks.length?
+ db.tasks.map(t=>'<div class="item"><b>'+esc(t.name)+'</b><br>'+esc(t.status)+(t.reward?' — '+t.reward+' পয়েন্ট':'')+'</div>').join("")
+ :"এখনো কোনো কাজ জমা দেননি।";
+
+ document.getElementById("withdrawList").innerHTML=db.withdrawals.map(w=>
+ '<div class="item">'+esc(w.method)+' — '+money(w.amount)+' — '+esc(w.status)+'</div>'
+ ).join("");
+
+ if(adminOpen){
+  document.getElementById("revenue").textContent=money(db.revenue);
+  document.getElementById("reserve").textContent=money(db.reserve);
+  document.getElementById("allPoints").textContent=db.approvedPoints.toLocaleString("bn-BD");
+  document.getElementById("pendingCount").textContent=db.tasks.filter(t=>t.status==="Pending").length;
+
+  document.getElementById("adminOffers").innerHTML=db.offers.length?
+  db.offers.map(o=>'<div class="item"><b>'+esc(o.name)+'</b><br><span class="small">'+esc(o.description)+'<br>'+o.reward+' পয়েন্ট — '+(o.active?'চালু':'বন্ধ')+'</span><br><button class="gray" onclick="toggleOffer('+o.id+')">'+(o.active?'বন্ধ করুন':'চালু করুন')+'</button></div>').join("")
+  :"এখনো কোনো Task তৈরি হয়নি।";
+
+  document.getElementById("sponsorHistory").innerHTML=db.sponsors.map(s=>
+  '<div class="item">'+esc(s.name)+' — পেয়েছেন '+money(s.amount)+' — বরাদ্দ '+money(s.reserve)+'</div>'
+  ).join("");
+
+  document.getElementById("adminTasks").innerHTML=db.tasks.length?
+  db.tasks.map(t=>'<div class="item"><b>'+esc(t.name)+'</b><br><span class="small">প্রমাণ: '+esc(t.proof)+'<br>অবস্থা: '+esc(t.status)+'</span>'+
+  (t.status==="Pending"?'<div class="actions"><button class="green" onclick="approveTask('+t.id+')">Approve</button><button class="red" onclick="rejectTask('+t.id+')">Reject</button></div>':'')+
+  '</div>').join("")
+  :"কোনো আবেদন নেই।";
+
+  document.getElementById("adminWithdraw").innerHTML=db.withdrawals.length?
+  db.withdrawals.map(w=>'<div class="item"><b>'+esc(w.method)+' — '+money(w.amount)+'</b><br>'+esc(w.phone)+' — '+esc(w.status)+
+  (w.status==="Pending"?'<div class="actions"><button class="green" onclick="markPaid('+w.id+')">বাস্তবে পাঠানো হয়েছে</button><button class="red" onclick="rejectWithdraw('+w.id+')">Reject</button></div>':'')+
+  '</div>').join("")
+  :"কোনো আবেদন নেই।";
+ }
+}
+
+async function verifyTelegramLogin(){
+ const status=document.getElementById("telegramAuthStatus");
+ const profileName=document.getElementById("profileName");
+ const profileTelegram=document.getElementById("profileTelegram");
+ const tg=window.Telegram&&window.Telegram.WebApp;
+
+ if(!tg||!tg.initData){
+  status.textContent="অ্যাপটি Telegram-এর ভেতর থেকে খুলুন। সাধারণ Browser Preview-তে Telegram Login যাচাই হবে না।";
+  profileTelegram.textContent="Telegram-এর ভেতর থেকে খুললে Login যাচাই হবে।";
+  return;
+ }
+
+ tg.ready();
+ if(typeof tg.expand==="function")tg.expand();
+
+ try{
+  const response=await fetch("https://osthir-income.onrender.com/api/auth",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({initData:tg.initData})
+  });
+  const result=await response.json();
+
+  if(!response.ok||!result.success||!result.user){
+   throw new Error(result.message||"Telegram verification failed");
+  }
+
+  const user=result.user;
+  const displayName=[user.first_name,user.last_name].filter(Boolean).join(" ")||"Telegram User";
+  status.textContent="✅ Telegram Login সফল: "+displayName;
+  profileName.textContent=displayName;
+  profileTelegram.textContent=user.username?"Username: @"+user.username:"Telegram Login যাচাই হয়েছে।";
+ }catch(error){
+  status.textContent="⚠️ Telegram Login যাচাই হয়নি। ইন্টারনেট সংযোগ ও Backend পরীক্ষা করুন।";
+  profileTelegram.textContent="Login যাচাই ব্যর্থ হয়েছে। পরে আবার চেষ্টা করুন।";
+  console.error("Telegram auth error:",error);
+ }
+}
+
+render();
+verifyTelegramLogin();
+</script>
+</body>
+</html>
